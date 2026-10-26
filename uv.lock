@@ -1495,6 +1495,7 @@ window = [
 [package.dev-dependencies]
 dev = [
     { name = "mypy" },
+    { name = "pandas" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "scipy-stubs" },
@@ -1534,6 +1535,7 @@ provides-extras = ["window", "train"]
 [package.metadata.requires-dev]
 dev = [
     { name = "mypy", specifier = ">=1.18" },
+    { name = "pandas", specifier = ">=2.3" },
     { name = "pytest", specifier = ">=8.4" },
     { name = "ruff", specifier = ">=0.14" },
     { name = "scipy-stubs", specifier = ">=1.15" },

@@ -44,7 +44,14 @@ Repository = "https://github.com/OlleOltorp/minecraft-mob-dataset"
 [dependency-groups]
 # Running the notebooks in notebooks/ (they need the dataset, see their first cell).
 notebooks = ["ipykernel>=6.29", "matplotlib>=3.10", "nbclient>=0.10", "nbformat>=5.10", "pandas>=2.3"]
-dev = ["mypy>=1.18", "pytest>=8.4", "ruff>=0.14", "scipy-stubs>=1.15", "types-psutil>=7.0"]
+dev = [
+  "mypy>=1.18",
+  "pandas>=2.3",  # the notebook scoring tests
+  "pytest>=8.4",
+  "ruff>=0.14",
+  "scipy-stubs>=1.15",
+  "types-psutil>=7.0",
+]
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cu130", marker = "sys_platform != 'darwin'" }]
@@ -69,6 +76,9 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.mypy]
 python_version = "3.12"
+# Windows, where the capture runs: on other platforms the window capture module stops at its
+# import guard and mypy cannot type what follows.
+platform = "win32"
 files = ["src", "tests"]
 strict_optional = true
 disallow_untyped_defs = true
