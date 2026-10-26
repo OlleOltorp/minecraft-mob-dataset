@@ -1,0 +1,7 @@
+# A snowy village at sunset in falling snow: villagers, golems and the cold biome's mobs.
+x = -9792
+z = -9120
+time = 12000
+weather = "rain"
+listed = [["villager", 8], ["iron_golem", 1], ["snow_golem", 2], ["rabbit", 2], ["fox", 2],
+          ["polar_bear", 1], ["stray", 2]]

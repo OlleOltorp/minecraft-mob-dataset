@@ -1,0 +1,7 @@
+# Open sparse jungle with scattered trees in the morning: pandas, parrots, ocelots and more.
+x = 8768
+z = -9728
+time = 3000
+find_open = 40
+listed = [["panda", 3], ["parrot", 3], ["ocelot", 2], ["chicken", 2], ["pig", 1], ["creeper", 1],
+          ["zombie", 1], ["spider", 1]]

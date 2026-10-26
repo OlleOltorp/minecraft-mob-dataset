@@ -1,0 +1,28 @@
+{
+	"schemaVersion": 1,
+	"id": "mobcapture",
+	"version": "${version}",
+	"name": "Mob Capture",
+	"description": "Pixel-exact label images and a scene probe for Minecraft mob datasets (client); natural mid-fight looks for summoned mobs (server).",
+	"contact": {
+		"sources": "https://github.com/OlleOltorp/minecraft-mob-dataset"
+	},
+	"authors": [
+		"Olle Oltorp"
+	],
+	"license": "MIT",
+	"environment": "*",
+	"mixins": [
+		"mobcapture.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~1.21.11",
+		"java": ">=21"
+	},
+	"entrypoints": {
+		"client": [
+			"io.github.olleoltorp.mobcapture.MobCaptureClient"
+		]
+	}
+}

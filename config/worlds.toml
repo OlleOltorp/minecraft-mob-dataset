@@ -1,0 +1,16 @@
+# Worlds the server can run, picked with `mobdataset session --world <name>`; each table holds
+# server.properties values applied before the server starts. Worlds live side by side in
+# the server folder under their level-name.
+
+[flat]
+# Superflat plains for the known-answer checks.
+level-name = "world"
+level-type = 'minecraft:flat'
+level-seed = ""
+
+[dataset-v2]
+# Normal terrain for the full dataset (datasets/full.toml). One seed; test pictures come from
+# regions far from every training spot.
+level-name = "dataset-v2"
+level-type = 'minecraft:normal'
+level-seed = "20261015"

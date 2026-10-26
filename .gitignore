@@ -1,0 +1,42 @@
+# Captures, worlds, datasets and training runs (see MOBDATASET_DATA in .env.example)
+/data/
+/runs/
+/logs/
+
+# Local settings
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+build/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Model weights
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+
+# Java / Gradle
+.gradle/
+mod/build/
+mod/run/
+*.class
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

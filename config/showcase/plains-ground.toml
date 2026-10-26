@@ -1,0 +1,40 @@
+# Showcase video for judging a detector: every mob, in groups at fresh random spots, filmed
+# at eye height by a camera walking round them, on superflat plains at noon.
+# Used by `mobdataset showcase`.
+
+seed = 8
+groups = ["hostile", "neutral", "passive"]
+fps = 30
+
+[stage]
+# Away from the capture areas (x 0..1800), so nothing left over from captures shows up.
+origin_x = -800
+origin_z = 0
+ground_y = -60
+clusters = 6
+# Cluster centres sit on a circle this far from the origin.
+ring = 36.0
+# Mobs stand within this many blocks of their cluster centre, this far apart at least.
+cluster_radius = 9.0
+min_gap = 2.2
+min_gap_large = 4.5
+
+[flight]
+# Same layout as plains.toml, but the camera stays at eye height (height 0 = feet on the
+# ground), so mobs overlap and hide each other as they do in a view from the ground.
+# 1) Wide arc round the outside of all clusters.
+overview_radius = 60.0
+overview_height = 0.0
+overview_seconds = 30.0
+overview_turn = 0.35
+# 2) A closer arc round each cluster in turn.
+cluster_orbit_radius = 14.0
+cluster_orbit_height = 0.0
+cluster_seconds = 12.0
+cluster_turn = 0.5
+# Eased glides between arcs, no faster than this on average (blocks/s, degrees/s).
+glide_speed = 5.0
+glide_turn_rate = 15.0
+glide_min_seconds = 2.0
+# Camera updates per second; matches fps so every video frame gets a fresh pose.
+hz = 30

@@ -1,0 +1,15 @@
+# The published baseline: RF-DETR Large from COCO weights on the full dataset, 10 epochs.
+# mobdataset train data/datasets/full --config baselines/rf-detr/config.toml
+# Trained on one RTX 4070 (12 GB), about 50 minutes per epoch.
+
+name = "rfdetr-large_full"
+size = "large"
+epochs = 10
+batch = 4  # images per step on the GPU
+accum = 4  # steps per update: 16 pictures per update
+lr = 1e-4
+scheduler = "cosine"  # decays to 0 by the last epoch
+warmup = 0.25  # epochs
+seed = 0
+per_class = true
+test = true

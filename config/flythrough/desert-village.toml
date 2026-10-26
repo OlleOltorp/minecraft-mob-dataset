@@ -1,0 +1,4 @@
+# A desert village between dunes and badlands at noon: villagers, camels, husks.
+x = -9680
+z = 8464
+listed = [["villager", 8], ["camel", 2], ["rabbit", 2], ["husk", 2], ["cat", 1], ["iron_golem", 1]]

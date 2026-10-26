@@ -1,0 +1,34 @@
+# Grassland only (plains, sunflower plains, meadow, savanna), at all times of day and in all
+# weathers: about 2,000 pictures, a small dataset for trying out models and settings.
+
+extends = "full"
+world = "plains"
+world_seed = "20261015"
+
+[survey]
+half_size = 3072
+half_size_nether = 256
+half_size_end = 256
+
+[areas.land]
+pictures = 2000
+min_per_biome = 0
+biomes = ["plains", "sunflower_plains", "meadow", "savanna"]
+
+[areas.ocean]
+pictures = 0
+
+[areas.caves]
+pictures = 0
+
+[areas.nether]
+pictures = 0
+
+[areas.end]
+pictures = 0
+
+[areas.structures]
+pictures = 0
+
+[areas.empty]
+pictures = 200

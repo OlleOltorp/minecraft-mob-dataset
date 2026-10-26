@@ -1,0 +1,24 @@
+# The mushroom island at noon with a bit of everything, on land, in the air and in the sea.
+x = 9408
+z = -9728
+find_open = 120
+mobs = 48
+spread = 24.0
+unique = true
+listed = [
+    ["armadillo", 1], ["blaze", 1], ["bogged", 1], ["breeze", 1], ["camel", 1], ["camel_husk", 1],
+    ["cat", 1], ["cave_spider", 1], ["chicken", 1], ["copper_golem", 1], ["cow", 1],
+    ["creaking", 1], ["creeper", 1], ["donkey", 1], ["enderman", 1], ["endermite", 1],
+    ["evoker", 1], ["fox", 1], ["goat", 1], ["hoglin", 1], ["horse", 1], ["husk", 1],
+    ["iron_golem", 1], ["llama", 1], ["magma_cube", 1], ["mooshroom", 1], ["mule", 1],
+    ["ocelot", 1], ["panda", 1], ["parched", 1], ["parrot", 1], ["pig", 1], ["piglin", 1],
+    ["piglin_brute", 1], ["pillager", 1], ["polar_bear", 1], ["rabbit", 1], ["ravager", 1],
+    ["sheep", 1], ["shulker", 1], ["silverfish", 1], ["skeleton", 1], ["skeleton_horse", 1],
+    ["slime", 1], ["sniffer", 1], ["snow_golem", 1], ["spider", 1], ["stray", 1], ["strider", 1],
+    ["trader_llama", 1], ["villager", 1], ["vindicator", 1], ["wandering_trader", 1],
+    ["warden", 1], ["witch", 1], ["wither_skeleton", 1], ["wolf", 1], ["zoglin", 1], ["zombie", 1],
+    ["zombie_horse", 1], ["zombie_villager", 1], ["zombified_piglin", 1], ["allay", 1], ["bat", 1],
+    ["bee", 1], ["phantom", 1], ["vex", 1], ["axolotl", 1], ["cod", 1], ["dolphin", 1],
+    ["drowned", 1], ["frog", 1], ["glow_squid", 1], ["guardian", 1], ["nautilus", 1],
+    ["pufferfish", 1], ["salmon", 1], ["squid", 1], ["tropical_fish", 1], ["turtle", 1],
+]

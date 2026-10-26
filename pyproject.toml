@@ -1,0 +1,91 @@
+[project]
+name = "mobdataset"
+version = "0.1.0"
+description = "Generate labelled Minecraft mob datasets and train detectors on them."
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Olle Oltorp" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "numpy>=2.1",
+  "pillow>=11.0",
+  "portablemc>=4.4,<5",
+  "psutil>=7.0",
+  "pyarrow>=21.0",
+  "pycocotools>=2.0.10",
+  "scipy>=1.15",
+]
+classifiers = [
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Image Recognition",
+  "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+# Live window capture for the showcase video and the window checks (Windows only).
+window = ["opencv-python>=4.11", "windows-capture>=1.5; sys_platform == 'win32'"]
+# Training, evaluation and detection with RF-DETR (CUDA build of torch on Linux and Windows).
+train = [
+  "matplotlib>=3.10",
+  "opencv-python>=4.11",
+  "pandas>=2.3",
+  "rfdetr[train,loggers]==1.11.2",
+  "supervision>=0.26",
+  "torch>=2.9",
+  "torchvision>=0.24",
+]
+
+[project.scripts]
+mobdataset = "mobdataset.cli:main"
+
+[project.urls]
+Repository = "https://github.com/OlleOltorp/minecraft-mob-dataset"
+
+[dependency-groups]
+# Running the notebooks in notebooks/ (they need the dataset, see their first cell).
+notebooks = ["ipykernel>=6.29", "matplotlib>=3.10", "nbclient>=0.10", "nbformat>=5.10", "pandas>=2.3"]
+dev = ["mypy>=1.18", "pytest>=8.4", "ruff>=0.14", "scipy-stubs>=1.15", "types-psutil>=7.0"]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu130", marker = "sys_platform != 'darwin'" }]
+torchvision = [{ index = "pytorch-cu130", marker = "sys_platform != 'darwin'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src", "tests"]
+strict_optional = true
+disallow_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra"]
+
+[[tool.mypy.overrides]]
+module = ["pyarrow.*", "pycocotools.*", "rfdetr.*", "supervision.*", "windows_capture.*"]
+ignore_missing_imports = true
+
+# Heavy optional libraries: treated as untyped so checks match with or without the extras.
+[[tool.mypy.overrides]]
+module = ["cv2.*", "matplotlib.*", "pandas.*", "torch.*", "torchvision.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true
+ignore_missing_imports = true

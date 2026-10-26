@@ -1,0 +1,33 @@
+# Oceans only, above and under water, about 2,000 pictures: drowned, guardians, fish,
+# dolphins and the other water mobs.
+
+extends = "full"
+world = "ocean"
+world_seed = "20261015"
+
+[survey]
+half_size = 4096
+half_size_nether = 256
+half_size_end = 256
+
+[areas.land]
+pictures = 0
+
+[areas.ocean]
+pictures = 2000
+min_per_biome = 0
+
+[areas.caves]
+pictures = 0
+
+[areas.nether]
+pictures = 0
+
+[areas.end]
+pictures = 0
+
+[areas.structures]
+pictures = 0
+
+[areas.empty]
+pictures = 200

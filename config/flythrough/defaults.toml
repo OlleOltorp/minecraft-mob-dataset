@@ -1,0 +1,34 @@
+# Shared settings of the fly-through scenes (`mobdataset flythrough`); a scene file sets its
+# place and may change any of these (its tables merge into these).
+
+dimension = "overworld"
+time = 6000  # day time in ticks: 1000 morning, 6000 noon, 12000 sunset
+weather = "clear"  # clear, rain or thunder (snow where it is cold)
+seed = 1
+mobs = 24  # mobs to place round the place
+spread = 20.0  # within this many blocks of it
+max_above = 12.0  # and no higher than this above its ground (open air near the probe)
+# Search this far round the place for the point with the most open ground (not treetops or
+# giant mushrooms) and centre the scene there; 0 keeps the place as it is.
+find_open = 0
+unique = false  # with listed mobs: every listed mob once before any repeats
+# Fly under water: the place's ground is the sea floor and the camera stays below the surface.
+underwater = false
+probe_y = 200.0  # camera height for finding spots: it looks straight down on the place
+probe_samples = 12000  # also maps the terrain the camera must clear
+# Pose of each mob: standing, or frozen mid-step at a walk or run (as in the dataset).
+motion = { still = 0.45, walk = 0.4, run = 0.15, walk_speed = [0.25, 0.65], run_speed = [0.7, 1.0] }
+
+[flight]
+fps = 24
+# Orbits round the place, in order: radius, height above its ground (blocks), seconds, share
+# of a full turn. Wide and high, then low among the mobs, then rising out again.
+orbits = [[48.0, 32.0, 12.0, 0.2], [16.0, 5.0, 16.0, 0.45], [34.0, 16.0, 10.0, 0.25]]
+# Eased glides between orbits, no faster than this (blocks/s, degrees/s).
+glide_speed = 6.0
+glide_turn_rate = 20.0
+glide_min_seconds = 2.0
+# The camera stays this many blocks above anything within clearance_radius blocks below it
+# (ground, treetops, water), rising early and easing back down.
+clearance = 2.5
+clearance_radius = 3.0

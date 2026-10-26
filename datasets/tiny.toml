@@ -1,0 +1,38 @@
+# A tiny dataset for a first run: a small piece of normal terrain around 0,0, three spots per
+# land biome found there (so valid and test get some too), about 200 pictures. Survey, terrain
+# and capture take about a quarter of an hour, so it shows quickly whether a setup works.
+
+extends = "full"
+world = "tiny"
+world_seed = "20261015"
+
+[survey]
+half_size = 768
+half_size_nether = 256
+half_size_end = 256
+
+[split]
+# With 3 spots per biome, a test and a valid spot leave a third in train.
+min_train = 0.3
+
+[areas.land]
+pictures = 50
+min_per_biome = 30  # 3 spots per biome: the split holds out biomes with 3 or more
+
+[areas.ocean]
+pictures = 0
+
+[areas.caves]
+pictures = 0
+
+[areas.nether]
+pictures = 0
+
+[areas.end]
+pictures = 0
+
+[areas.structures]
+pictures = 0
+
+[areas.empty]
+pictures = 5

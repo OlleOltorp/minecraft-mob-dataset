@@ -1,0 +1,74 @@
+# How the capture runs: sampling, waits, timeouts, terrain repair and camera search. The same
+# for every dataset, so dataset files don't set these (see src/mobdataset/datasets.py). Change
+# them here only to make the capture work on another machine or game version.
+
+[survey]
+# End main island and the ring around it (the outer islands start ~1000 blocks out).
+end_min_radius = 1200
+end_island_radius = 100  # the main island; "the_end" points further out are empty ring
+end_island_step = 20  # grid for main island spots (the map's step misses it)
+# Heights the biome is read at: surface, and the two cave layers.
+y_surface = 64
+y_caves = -20
+y_deep = -50
+
+[spots]
+spacing_island = 40  # the End's main island, which is only ~200 blocks across
+# Spots windows work on at the same time are at least this far apart, so no window sees
+# another's mobs: drawn up to entity_render_distance (400) from a camera, mobs up to 300
+# from it (aerial), cameras up to 200 from their spot (aerial at structures).
+window_gap = 1200
+
+[areas.structures]
+search_step = 1500  # grid of points `locate` runs from, blocks
+find_per_region = 3  # `mobdataset features`: most points kept per region file (spread)
+
+[scene]
+probe_samples = 600
+spot_radius = 24.0  # camera within this many blocks of the spot
+spot_radius_end = 64.0  # End islands are small and far apart
+cave_y = { caves = -20, deep = -45 }
+nether_y = 64
+room_radius = 24
+room_min_view = 6.0  # mean free distance around a cave camera, blocks
+unlabelled = ["armor_stand"]  # placed but never labelled (the mod labels mobs and mannequins)
+# Room cameras: columns half/step round the centre are checked every dy blocks over y (per
+# dimension) for points inside the structure; the room finder runs from up to room_searches.
+# "near" cameras: open places within this many blocks of the feature.
+near_radius = 12.0
+structure_scan = { half = 32, step = 16, dy = 4, room_searches = 6, y = { overworld = [-64, 160], the_nether = [0, 128], the_end = [0, 160] } }
+pose_tries = 6  # camera places tried per picture (End spots often hang over the void)
+settle_first = 2.0  # seconds without terrain changes before the first picture of a spot
+settle = 0.5
+terrain_timeout = 25.0
+load_timeout = 60.0  # seconds to wait for new ground to generate before placing the camera
+max_hole_share = 0.005  # rays meeting undrawn terrain, of rays meeting terrain, before mending
+# Share of chunks within view distance the window must have; below 1.0 far terrain has gaps.
+view_loaded = 1.0
+# Camera waits this high above a spot until the ground there has loaded.
+wait_y = { overworld = 200, the_nether = 100, the_end = 120 }
+bosses = ["ender_dragon", "wither", "elder_guardian", "warden"]
+riders = false  # jockeys etc.: off, as with ticks frozen riders are not placed in the seat
+end_min_y = 10.0  # End camera spots lower than this are over the void
+# Entities never moved when clearing the place before each picture (only placed mobs stay).
+never_move = [
+  "player", "item_frame", "glow_item_frame", "painting", "armor_stand", "end_crystal",
+  "minecart", "chest_minecart", "furnace_minecart", "hopper_minecart",
+  "tnt_minecart", "spawner_minecart", "command_block_minecart", "leash_knot", "marker",
+  "interaction", "block_display", "item_display", "text_display", "falling_block",
+]
+
+[phase]
+# Every `spots` spots per window, all windows meet and time and weather change; ticks run
+# then (rain fades in, mobs moved into the void go). Fewer meetings mean less waiting for the
+# slowest window but fewer draws: with 10 windows meeting every spot, one draw covers ~100
+# pictures.
+spots = 1
+ticks = 110  # rain and thunder change by 0.01 per tick: 100 for a full change
+
+[export]
+visibility_diff = 12
+too_dark = [25.0, 12.0]  # the too_dark field only (for filtering): brightness and contrast below
+# Mobs whose model fills their 3D box exactly: the check that projected boxes (box_full) are
+# right (slimes bounce and their cube is smaller than their box).
+check_box_shaped = ["shulker"]

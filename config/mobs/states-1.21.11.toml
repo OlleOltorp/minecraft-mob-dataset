@@ -1,0 +1,1285 @@
+# Random visible states for summoned mobs, Minecraft Java 1.21.11.
+# Keys and value formats come from the decompiled 1.21.11 source (Mojang names) and the
+# server jar's data registries; "src:" names the class whose load method reads the key.
+#
+# Why this matters: `summon <id> <pos> <nbt>` with an NBT argument skips finalizeSpawn
+# (SummonCommand#createEntity). So no natural defaults are applied: no skeleton bow, no
+# random sheep colour, no biome variant, no armour, no jockeys. Everything natural must
+# come from this file.
+#
+# Format
+#   [meta]                   no_states: mobs with nothing useful to vary.
+#   [templates.<name>]       generators referenced by features (armour sets).
+#   [general.<feature>]      applies to every mob except those in `except`.
+#   [<mob>.<feature>]        one independent feature of that mob (id without "minecraft:").
+#   [riders.<name>]          vehicle + passenger combos.
+#
+# Feature keys
+#   chance       probability the feature is applied; rolled independently, in file order.
+#   nbt          alternatives; one is picked and added inside summon's {...}.
+#   equip        alternatives instead of nbt; each maps slot -> item SNBT. All picked items
+#                are merged into one equipment:{...} compound. Slots: mainhand, offhand,
+#                head, chest, legs, feet, body, saddle (EquipmentSlot).
+#   weights      optional, same length as nbt/equip; default uniform.
+#   also         fixed snippet added whenever the feature applies (dedupe identical ones).
+#   unless       feature names of the same mob; skip if any of them was applied.
+#   requires     feature names of the same mob; skip unless all of them were applied.
+#   merge_into   the picked nbt value is not a snippet but a field value, written into the
+#                named compound field of an earlier snippet (VillagerData.profession takes
+#                "minecraft:<value>", VillagerData.level the bare int).
+#   template     name of a [templates.*] entry that generates the equip instead.
+#   command      run after the summon instead of NBT; {target} = selector for that mob.
+#   needs_ticks  only shows after this many ticks (`tick step N`): the synced flag or the
+#                client animation is set in tick(), which a frozen world never runs.
+#                Running ticks in daylight also sets bare-headed undead on fire.
+#   verify       key or effect not yet confirmed in game.
+#   except       ([general] only) mobs the feature never applies to.
+# Placeholder: {player_uuid} = UUID int array of the camera player, e.g. [I;1,2,3,4].
+
+[meta]
+no_states = [
+  "breeze", "cave_spider", "cod", "creaking", "elder_guardian", "ender_dragon",
+  "endermite", "guardian", "ravager", "silverfish", "spider", "tadpole",
+  "wandering_trader", "warden",
+]
+# spider, cave_spider and ravager still get riders, see [riders].
+
+# Mob#populateDefaultEquipmentSlots: one material for the whole set, filled head -> feet,
+# stopping before each further piece with stop_chance (0.25 on normal). Material odds are
+# the game's (rand(3) + 3 x 10.87 % upgrades), with iron/diamond raised for coverage.
+[templates.armour]
+materials = ["leather", "copper", "golden", "chainmail", "iron", "diamond"]
+material_weights = [24, 30, 30, 10, 5, 1]
+slots = ["head", "chest", "legs", "feet"]
+items = { head = "helmet", chest = "chestplate", legs = "leggings", feet = "boots" }
+stop_chance = 0.25
+# item id = "minecraft:<material>_<items[slot]>"
+
+# ---------------------------------------------------------------- general
+
+[general.on_fire]
+# Burning flames. HasVisualFire avoids fire damage; the shared on-fire flag is only set in
+# Entity#baseTick, and the client hides fire on fire-immune types (Entity#isOnFire).
+chance = 0.04
+nbt = ['HasVisualFire:1b']
+needs_ticks = 1
+verify = true
+except = [
+  "blaze", "ender_dragon", "ghast", "magma_cube", "shulker", "strider", "vex", "warden",
+  "wither", "wither_skeleton", "zoglin", "zombified_piglin", "mannequin", "armor_stand",
+  "axolotl", "cod", "dolphin", "elder_guardian", "glow_squid", "guardian", "nautilus",
+  "pufferfish", "salmon", "squid", "tadpole", "tropical_fish", "zombie_nautilus",
+]
+
+[general.hurt_flash]
+# Red hurt tint. HurtTime NBT is server-only; the client tint comes from the damage event
+# and hurtTime only counts down in LivingEntity#baseTick, so it stays while frozen.
+chance = 0.04
+command = "damage {target} 1"
+verify = true
+except = ["ender_dragon", "wither", "mannequin", "armor_stand"]
+
+# ---------------------------------------------------------------- hostile
+
+[bogged.weapon]
+# Bow; AbstractSkeleton#populateDefaultEquipmentSlots.
+chance = 1.0
+equip = [
+  { mainhand = '{id:"minecraft:bow"}' },
+  { mainhand = '{id:"minecraft:bow",components:{"minecraft:enchantments":{"minecraft:power":2}}}' },
+]
+weights = [9, 1]
+
+[bogged.sheared]
+# No mushrooms on the head; src: Bogged#read "sheared".
+chance = 0.1
+nbt = ['sheared:1b']
+
+[bogged.armour]
+chance = 0.1
+template = "armour"
+
+[camel_husk.saddle]
+# Saddle; LivingEntity equipment. Natural camel husks come with riders, see [riders].
+chance = 0.3
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+
+[camel_husk.sitting]
+# Lying down; src: Camel#read "LastPoseTick" < 0 sets Pose.SITTING. The sit animation
+# starts in the client tick.
+chance = 0.1
+nbt = ['LastPoseTick:-1L']
+needs_ticks = 1
+verify = true
+
+[creeper.powered]
+# Charged aura; src: Creeper#read "powered".
+chance = 0.05
+nbt = ['powered:1b']
+
+[creeper.ignited]
+# Swollen and flashing white. Client swell grows 1/tick up to its own default 30, while the
+# huge server Fuse stops the explosion; radius 0 as a second guard. src: Creeper#read/tick.
+chance = 0.05
+nbt = ['ignited:1b,Fuse:32767s,ExplosionRadius:0b']
+needs_ticks = 15
+verify = true
+
+[drowned.baby]
+chance = 0.05
+nbt = ['IsBaby:1b']
+
+[drowned.weapon]
+# Drowned#populateDefaultEquipmentSlots: 10 %, trident 10/16 else fishing rod.
+chance = 0.15
+equip = [{ mainhand = '{id:"minecraft:trident"}' }, { mainhand = '{id:"minecraft:fishing_rod"}' }]
+weights = [10, 6]
+
+[drowned.shell]
+# Nautilus shell in the off hand; Drowned#finalizeSpawn 3 %.
+chance = 0.05
+equip = [{ offhand = '{id:"minecraft:nautilus_shell"}' }]
+
+[evoker.banner]
+# Raid captain: ominous banner on the head; Raid#getOminousBannerInstance.
+chance = 0.03
+equip = [{ head = '{id:"minecraft:white_banner",components:{"minecraft:banner_patterns":[{pattern:"minecraft:rhombus",color:"cyan"},{pattern:"minecraft:stripe_bottom",color:"light_gray"},{pattern:"minecraft:stripe_center",color:"gray"},{pattern:"minecraft:border",color:"light_gray"},{pattern:"minecraft:stripe_middle",color:"black"},{pattern:"minecraft:half_horizontal",color:"light_gray"},{pattern:"minecraft:circle",color:"light_gray"},{pattern:"minecraft:border",color:"black"}]}}' }]
+also = 'PatrolLeader:1b'
+
+[hoglin.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[husk.baby]
+chance = 0.05
+nbt = ['IsBaby:1b']
+
+[husk.weapon]
+# Zombie#populateDefaultEquipmentSlots: iron sword 1/6, iron spear 1/6, iron shovel 4/6.
+chance = 0.05
+equip = [
+  { mainhand = '{id:"minecraft:iron_sword"}' },
+  { mainhand = '{id:"minecraft:iron_spear"}' },
+  { mainhand = '{id:"minecraft:iron_shovel"}' },
+]
+weights = [1, 1, 4]
+
+[husk.armour]
+chance = 0.1
+template = "armour"
+
+[magma_cube.size]
+# src: Slime#read "Size" stores size - 1; natural sizes 1, 2, 4.
+chance = 1.0
+nbt = ['Size:0', 'Size:1', 'Size:3']
+
+[parched.weapon]
+# Bow; Parched extends AbstractSkeleton.
+chance = 1.0
+equip = [
+  { mainhand = '{id:"minecraft:bow"}' },
+  { mainhand = '{id:"minecraft:bow",components:{"minecraft:enchantments":{"minecraft:power":2}}}' },
+]
+weights = [9, 1]
+
+[parched.armour]
+chance = 0.1
+template = "armour"
+
+[phantom.size]
+# src: Phantom#read "size"; natural phantoms are 0, bigger ones only for coverage.
+chance = 0.1
+nbt = ['size:1', 'size:2', 'size:4']
+
+[piglin_brute.weapon]
+# Golden axe; PiglinBrute#populateDefaultEquipmentSlots.
+chance = 1.0
+equip = [{ mainhand = '{id:"minecraft:golden_axe"}' }]
+
+[pillager.weapon]
+# Crossbow; Pillager#populateDefaultEquipmentSlots.
+chance = 1.0
+equip = [
+  { mainhand = '{id:"minecraft:crossbow"}' },
+  { mainhand = '{id:"minecraft:crossbow",components:{"minecraft:enchantments":{"minecraft:quick_charge":1}}}' },
+]
+weights = [9, 1]
+
+[pillager.banner]
+# Patrol leader with ominous banner; Raid#getOminousBannerInstance.
+chance = 0.1
+equip = [{ head = '{id:"minecraft:white_banner",components:{"minecraft:banner_patterns":[{pattern:"minecraft:rhombus",color:"cyan"},{pattern:"minecraft:stripe_bottom",color:"light_gray"},{pattern:"minecraft:stripe_center",color:"gray"},{pattern:"minecraft:border",color:"light_gray"},{pattern:"minecraft:stripe_middle",color:"black"},{pattern:"minecraft:half_horizontal",color:"light_gray"},{pattern:"minecraft:circle",color:"light_gray"},{pattern:"minecraft:border",color:"black"}]}}' }]
+also = 'PatrolLeader:1b'
+
+[shulker.colour]
+# src: Shulker#read "Color" byte, 0-15 dye id, 16 = default purple.
+chance = 0.15
+nbt = [
+  'Color:0b', 'Color:1b', 'Color:2b', 'Color:3b', 'Color:4b', 'Color:5b', 'Color:6b', 'Color:7b',
+  'Color:8b', 'Color:9b', 'Color:10b', 'Color:11b', 'Color:12b', 'Color:13b', 'Color:14b', 'Color:15b',
+]
+
+[shulker.peek]
+# Lid open; src: Shulker#read "Peek" 0-100. The lid moves 5 %/tick in Shulker#tick.
+chance = 0.4
+nbt = ['Peek:30b', 'Peek:100b']
+weights = [3, 1]
+needs_ticks = 20
+
+[skeleton.weapon]
+# Bow; AbstractSkeleton#populateDefaultEquipmentSlots.
+chance = 1.0
+equip = [
+  { mainhand = '{id:"minecraft:bow"}' },
+  { mainhand = '{id:"minecraft:bow",components:{"minecraft:enchantments":{"minecraft:power":2}}}' },
+]
+weights = [9, 1]
+
+[skeleton.armour]
+chance = 0.15
+template = "armour"
+
+[slime.size]
+# src: Slime#read "Size" stores size - 1; natural sizes 1, 2, 4.
+chance = 1.0
+nbt = ['Size:0', 'Size:1', 'Size:3']
+
+[stray.weapon]
+chance = 1.0
+equip = [
+  { mainhand = '{id:"minecraft:bow"}' },
+  { mainhand = '{id:"minecraft:bow",components:{"minecraft:enchantments":{"minecraft:power":2}}}' },
+]
+weights = [9, 1]
+
+[stray.armour]
+chance = 0.1
+template = "armour"
+
+[vex.weapon]
+# Iron sword; Vex#populateDefaultEquipmentSlots.
+chance = 1.0
+equip = [{ mainhand = '{id:"minecraft:iron_sword"}' }]
+
+[vindicator.weapon]
+# Iron axe; Vindicator#populateDefaultEquipmentSlots. Only drawn while aggressive
+# (VindicatorRenderer), so it stays hidden with NoAI; set for realism.
+chance = 1.0
+equip = [{ mainhand = '{id:"minecraft:iron_axe"}' }]
+
+[vindicator.banner]
+chance = 0.05
+equip = [{ head = '{id:"minecraft:white_banner",components:{"minecraft:banner_patterns":[{pattern:"minecraft:rhombus",color:"cyan"},{pattern:"minecraft:stripe_bottom",color:"light_gray"},{pattern:"minecraft:stripe_center",color:"gray"},{pattern:"minecraft:border",color:"light_gray"},{pattern:"minecraft:stripe_middle",color:"black"},{pattern:"minecraft:half_horizontal",color:"light_gray"},{pattern:"minecraft:circle",color:"light_gray"},{pattern:"minecraft:border",color:"black"}]}}' }]
+also = 'PatrolLeader:1b'
+
+[witch.potion]
+# Potion in hand (WitchItemLayer draws the main hand); natural only while drinking.
+chance = 0.25
+equip = [
+  { mainhand = '{id:"minecraft:potion",components:{"minecraft:potion_contents":{potion:"minecraft:healing"}}}' },
+  { mainhand = '{id:"minecraft:potion",components:{"minecraft:potion_contents":{potion:"minecraft:fire_resistance"}}}' },
+  { mainhand = '{id:"minecraft:potion",components:{"minecraft:potion_contents":{potion:"minecraft:water_breathing"}}}' },
+  { mainhand = '{id:"minecraft:potion",components:{"minecraft:potion_contents":{potion:"minecraft:swiftness"}}}' },
+]
+
+[wither_skeleton.weapon]
+# Stone sword; WitherSkeleton#populateDefaultEquipmentSlots (no armour there).
+chance = 1.0
+equip = [{ mainhand = '{id:"minecraft:stone_sword"}' }]
+
+[zoglin.baby]
+# src: Zoglin#read "IsBaby".
+chance = 0.1
+nbt = ['IsBaby:1b']
+
+[zombie.baby]
+# src: Zombie#read "IsBaby"; natural odds 5 %.
+chance = 0.05
+nbt = ['IsBaby:1b']
+
+[zombie.weapon]
+chance = 0.05
+equip = [
+  { mainhand = '{id:"minecraft:iron_sword"}' },
+  { mainhand = '{id:"minecraft:iron_spear"}' },
+  { mainhand = '{id:"minecraft:iron_shovel"}' },
+]
+weights = [1, 1, 4]
+
+[zombie.armour]
+chance = 0.15
+template = "armour"
+
+[zombie_villager.baby]
+chance = 0.05
+nbt = ['IsBaby:1b']
+
+[zombie_villager.data]
+# Robe and hat; src: ZombieVillager#read "VillagerData" {type, profession, level}.
+chance = 1.0
+nbt = [
+  'VillagerData:{type:"minecraft:plains",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:desert",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:jungle",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:savanna",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:snow",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:swamp",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:taiga",profession:"minecraft:none",level:1}',
+]
+weights = [4, 2, 1, 1, 1, 1, 1]
+
+[zombie_villager.profession]
+# Overrides the profession picked above (keeps the type); see [villager.profession].
+chance = 0.5
+unless = ["baby"]
+nbt = [
+  'armorer', 'butcher', 'cartographer', 'cleric', 'farmer', 'fisherman', 'fletcher',
+  'leatherworker', 'librarian', 'mason', 'nitwit', 'shepherd', 'toolsmith', 'weaponsmith',
+]
+# Profession ids, not snippets: code puts "minecraft:<id>" into VillagerData.profession.
+merge_into = "VillagerData.profession"
+verify = true
+
+[zombie_villager.weapon]
+chance = 0.05
+equip = [{ mainhand = '{id:"minecraft:iron_sword"}' }, { mainhand = '{id:"minecraft:iron_shovel"}' }]
+weights = [1, 4]
+
+[zombie_villager.armour]
+chance = 0.1
+template = "armour"
+
+# ---------------------------------------------------------------- neutral
+
+[bee.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[bee.nectar]
+# Pollen-dusted texture; src: Bee#read "HasNectar", BeeRenderer.
+chance = 0.3
+nbt = ['HasNectar:1b']
+
+[bee.angry]
+# Red-eyed texture. Legacy "AngerTime" is still read and becomes anger_end_time
+# (NeutralMob#readPersistentAngerSaveData); the client compares it with frozen game time.
+chance = 0.1
+nbt = ['AngerTime:999999']
+
+[bee.stung]
+# No stinger; src: Bee#read "HasStung".
+chance = 0.05
+nbt = ['HasStung:1b']
+
+[enderman.carried_block]
+# Block in its hands; src: EnderMan#read "carriedBlockState" (BlockState codec),
+# blocks from tag minecraft:enderman_holdable.
+chance = 0.15
+nbt = [
+  'carriedBlockState:{Name:"minecraft:grass_block"}',
+  'carriedBlockState:{Name:"minecraft:dirt"}',
+  'carriedBlockState:{Name:"minecraft:sand"}',
+  'carriedBlockState:{Name:"minecraft:gravel"}',
+  'carriedBlockState:{Name:"minecraft:poppy"}',
+  'carriedBlockState:{Name:"minecraft:dandelion"}',
+  'carriedBlockState:{Name:"minecraft:pumpkin"}',
+  'carriedBlockState:{Name:"minecraft:melon"}',
+  'carriedBlockState:{Name:"minecraft:cactus"}',
+  'carriedBlockState:{Name:"minecraft:tnt"}',
+  'carriedBlockState:{Name:"minecraft:warped_nylium"}',
+  'carriedBlockState:{Name:"minecraft:crimson_nylium"}',
+]
+
+[enderman.angry]
+# Angry at the camera player (angry_at); the open mouth (DATA_CREEPY), otherwise only set
+# by EnderMan#setTarget, comes from mobcapture_charging (NaturalLookMixin).
+chance = 0.1
+nbt = ['AngerTime:999999,angry_at:{player_uuid},mobcapture_charging:1b']
+verify = true
+
+[goat.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[goat.horns]
+# Missing horns; src: Goat#read "HasLeftHorn"/"HasRightHorn" (default true).
+chance = 0.15
+unless = ["baby"]
+nbt = ['HasLeftHorn:0b', 'HasRightHorn:0b', 'HasLeftHorn:0b,HasRightHorn:0b']
+
+[iron_golem.cracks]
+# Cracked texture by health fraction (Crackiness.GOLEM 0.75/0.5/0.25, max health 100).
+chance = 0.3
+nbt = ['Health:65f', 'Health:40f', 'Health:15f']
+
+[llama.variant]
+# src: Llama#read "Variant" int: 0 creamy, 1 white, 2 brown, 3 gray.
+chance = 1.0
+nbt = ['Variant:0', 'Variant:1', 'Variant:2', 'Variant:3']
+
+[llama.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[llama.carpet]
+# Carpet decor in the body slot (tamed by players).
+chance = 0.2
+unless = ["baby"]
+also = 'Tame:1b'
+equip = [
+  { body = '{id:"minecraft:white_carpet"}' }, { body = '{id:"minecraft:orange_carpet"}' },
+  { body = '{id:"minecraft:magenta_carpet"}' }, { body = '{id:"minecraft:light_blue_carpet"}' },
+  { body = '{id:"minecraft:yellow_carpet"}' }, { body = '{id:"minecraft:lime_carpet"}' },
+  { body = '{id:"minecraft:pink_carpet"}' }, { body = '{id:"minecraft:gray_carpet"}' },
+  { body = '{id:"minecraft:light_gray_carpet"}' }, { body = '{id:"minecraft:cyan_carpet"}' },
+  { body = '{id:"minecraft:purple_carpet"}' }, { body = '{id:"minecraft:blue_carpet"}' },
+  { body = '{id:"minecraft:brown_carpet"}' }, { body = '{id:"minecraft:green_carpet"}' },
+  { body = '{id:"minecraft:red_carpet"}' }, { body = '{id:"minecraft:black_carpet"}' },
+]
+
+[llama.chest]
+# Chest on the side; src: AbstractChestedHorse#read "ChestedHorse".
+chance = 0.15
+unless = ["baby"]
+nbt = ['ChestedHorse:1b']
+also = 'Tame:1b'
+
+[panda.genes]
+# Texture follows Panda.Gene#getVariantFromGenes: recessive brown/weak need both genes.
+chance = 1.0
+nbt = [
+  'MainGene:"normal",HiddenGene:"normal"',
+  'MainGene:"lazy",HiddenGene:"normal"',
+  'MainGene:"worried",HiddenGene:"normal"',
+  'MainGene:"playful",HiddenGene:"normal"',
+  'MainGene:"aggressive",HiddenGene:"normal"',
+  'MainGene:"weak",HiddenGene:"weak"',
+  'MainGene:"brown",HiddenGene:"brown"',
+]
+weights = [50, 8, 8, 8, 8, 10, 8]
+
+[panda.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[piglin.baby]
+# src: Piglin#read "IsBaby"; natural 20 %.
+chance = 0.2
+nbt = ['IsBaby:1b']
+
+[piglin.weapon]
+# Piglin#createSpawnWeapon: crossbow 50 %, else golden sword (spear 1/10).
+chance = 1.0
+unless = ["baby"]
+equip = [
+  { mainhand = '{id:"minecraft:crossbow"}' },
+  { mainhand = '{id:"minecraft:golden_sword"}' },
+  { mainhand = '{id:"minecraft:golden_spear"}' },
+]
+weights = [10, 9, 1]
+
+[piglin.admiring]
+# Gold in the off hand gives the admiring arm pose (Piglin#getArmPose).
+chance = 0.1
+equip = [{ offhand = '{id:"minecraft:gold_ingot"}' }]
+
+[piglin.helmet]
+# Piglin#maybeWearArmor: each golden piece 10 % on its own.
+chance = 0.1
+unless = ["baby"]
+equip = [{ head = '{id:"minecraft:golden_helmet"}' }]
+
+[piglin.chestplate]
+chance = 0.1
+unless = ["baby"]
+equip = [{ chest = '{id:"minecraft:golden_chestplate"}' }]
+
+[piglin.leggings]
+chance = 0.1
+unless = ["baby"]
+equip = [{ legs = '{id:"minecraft:golden_leggings"}' }]
+
+[piglin.boots]
+chance = 0.1
+unless = ["baby"]
+equip = [{ feet = '{id:"minecraft:golden_boots"}' }]
+
+[polar_bear.baby]
+chance = 0.2
+nbt = ['Age:-24000']
+
+[trader_llama.variant]
+# Trader decor shows whenever the body slot is empty (LlamaDecorLayer).
+chance = 1.0
+nbt = ['Variant:0', 'Variant:1', 'Variant:2', 'Variant:3']
+
+[wolf.variant]
+# src: Wolf#read "variant" (VariantUtils), ids from data/minecraft/wolf_variant.
+chance = 1.0
+nbt = [
+  'variant:"minecraft:pale"', 'variant:"minecraft:ashen"', 'variant:"minecraft:black"',
+  'variant:"minecraft:chestnut"', 'variant:"minecraft:rusty"', 'variant:"minecraft:snowy"',
+  'variant:"minecraft:spotted"', 'variant:"minecraft:striped"', 'variant:"minecraft:woods"',
+]
+weights = [3, 1, 1, 1, 1, 1, 1, 1, 1]
+
+[wolf.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[wolf.tame]
+# Tame texture and collar (shown only when tame, WolfRenderer). An owner UUID makes it
+# tame (TamableAnimal#read "Owner"); the owner need not exist.
+chance = 0.25
+nbt = [
+  'CollarColor:14b', 'CollarColor:11b', 'CollarColor:4b', 'CollarColor:13b',
+  'CollarColor:0b', 'CollarColor:15b', 'CollarColor:6b', 'CollarColor:1b',
+]
+weights = [8, 1, 1, 1, 1, 1, 1, 1]
+also = 'Owner:[I;1,2,3,4]'
+
+[wolf.sitting]
+# src: TamableAnimal#read "Sitting" -> setInSittingPose.
+chance = 0.5
+nbt = ['Sitting:1b']
+requires = ["tame"]
+
+[wolf.angry]
+# Angry texture, wild wolves only (Wolf#getTexture).
+chance = 0.1
+unless = ["tame"]
+nbt = ['AngerTime:999999']
+
+[wolf.armour]
+# Wolf armour in the body slot, optionally dyed (minecraft:dyed_color is an RGB int).
+chance = 0.3
+requires = ["tame"]
+unless = ["baby"]
+equip = [
+  { body = '{id:"minecraft:wolf_armor"}' },
+  { body = '{id:"minecraft:wolf_armor",components:{"minecraft:dyed_color":11546150}}' },
+  { body = '{id:"minecraft:wolf_armor",components:{"minecraft:dyed_color":3949738}}' },
+  { body = '{id:"minecraft:wolf_armor",components:{"minecraft:dyed_color":16701501}}' },
+]
+weights = [4, 1, 1, 1]
+
+[zombified_piglin.baby]
+chance = 0.05
+nbt = ['IsBaby:1b']
+
+[zombified_piglin.weapon]
+# ZombifiedPiglin#populateDefaultEquipmentSlots: golden spear 1/20, else golden sword.
+chance = 1.0
+equip = [{ mainhand = '{id:"minecraft:golden_sword"}' }, { mainhand = '{id:"minecraft:golden_spear"}' }]
+weights = [19, 1]
+
+# ---------------------------------------------------------------- passive
+
+[allay.item]
+# Held item in the main hand (Allay#read inventory, equipment mainhand).
+chance = 0.2
+equip = [
+  { mainhand = '{id:"minecraft:cookie"}' }, { mainhand = '{id:"minecraft:amethyst_shard"}' },
+  { mainhand = '{id:"minecraft:wheat"}' }, { mainhand = '{id:"minecraft:emerald"}' },
+]
+
+[armadillo.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[armadillo.rolled]
+# Rolled into a ball; src: Armadillo#read "state". "scared" hides in the shell at once
+# (ArmadilloState#shouldHideInShell is true for any tick count).
+chance = 0.3
+nbt = ['state:"scared"']
+
+[bat.hanging]
+# Upside down; src: Bat#read "BatFlags" bit 1. The rest animation starts in the client tick.
+# Looks right only under a solid block.
+chance = 0.3
+nbt = ['BatFlags:1b']
+needs_ticks = 1
+verify = true
+
+[camel.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[camel.saddle]
+chance = 0.2
+unless = ["baby"]
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+also = 'Tame:1b'
+
+[camel.sitting]
+# src: Camel#read "LastPoseTick" < 0 -> Pose.SITTING; animation starts in client tick.
+chance = 0.2
+nbt = ['LastPoseTick:-1L']
+needs_ticks = 1
+verify = true
+
+[cat.variant]
+# src: Cat#read "variant", ids from data/minecraft/cat_variant (all_black: witch huts).
+chance = 1.0
+nbt = [
+  'variant:"minecraft:tabby"', 'variant:"minecraft:black"', 'variant:"minecraft:red"',
+  'variant:"minecraft:siamese"', 'variant:"minecraft:british_shorthair"',
+  'variant:"minecraft:calico"', 'variant:"minecraft:persian"', 'variant:"minecraft:ragdoll"',
+  'variant:"minecraft:white"', 'variant:"minecraft:jellie"', 'variant:"minecraft:all_black"',
+]
+weights = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.5]
+
+[cat.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[cat.tame]
+# Collar shows only when tame (CatRenderer); src: Cat#read "CollarColor", "Owner".
+chance = 0.3
+nbt = ['CollarColor:14b', 'CollarColor:11b', 'CollarColor:4b', 'CollarColor:5b', 'CollarColor:6b']
+weights = [6, 1, 1, 1, 1]
+also = 'Owner:[I;1,2,3,4]'
+
+[cat.sitting]
+chance = 0.3
+nbt = ['Sitting:1b']
+
+[chicken.variant]
+# src: Chicken#read "variant", ids from data/minecraft/chicken_variant.
+chance = 1.0
+nbt = ['variant:"minecraft:temperate"', 'variant:"minecraft:warm"', 'variant:"minecraft:cold"']
+weights = [2, 1, 1]
+
+[chicken.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[copper_golem.oxidation]
+# src: CopperGolem#read "weather_state".
+chance = 1.0
+nbt = [
+  'weather_state:"unaffected"', 'weather_state:"exposed"',
+  'weather_state:"weathered"', 'weather_state:"oxidized"',
+]
+
+[copper_golem.poppy]
+# Poppy on the antenna: CopperGolem.EQUIPMENT_SLOT_ANTENNA is the saddle slot,
+# given by iron golems (OfferFlowerGoal).
+chance = 0.1
+equip = [{ saddle = '{id:"minecraft:poppy"}' }]
+
+[cow.variant]
+# src: Cow#read "variant", ids from data/minecraft/cow_variant.
+chance = 1.0
+nbt = ['variant:"minecraft:temperate"', 'variant:"minecraft:warm"', 'variant:"minecraft:cold"']
+weights = [2, 1, 1]
+
+[cow.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[donkey.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[donkey.chest]
+chance = 0.15
+unless = ["baby"]
+nbt = ['ChestedHorse:1b']
+also = 'Tame:1b'
+
+[donkey.saddle]
+chance = 0.15
+unless = ["baby"]
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+also = 'Tame:1b'
+
+[fox.variant]
+# src: Fox#read "Type": "red" or "snow".
+chance = 1.0
+nbt = ['Type:"red"', 'Type:"snow"']
+weights = [3, 1]
+
+[fox.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[fox.pose]
+# src: Fox#read "Sleeping"/"Sitting"/"Crouching"; sleeping also swaps to the sleep texture.
+chance = 0.3
+nbt = ['Sleeping:1b', 'Sitting:1b', 'Crouching:1b']
+weights = [3, 2, 1]
+
+[fox.mouth_item]
+# Fox#populateDefaultEquipmentSlots: 20 %, item in the mouth (main hand).
+chance = 0.2
+equip = [
+  { mainhand = '{id:"minecraft:emerald"}' }, { mainhand = '{id:"minecraft:egg"}' },
+  { mainhand = '{id:"minecraft:rabbit_foot"}' }, { mainhand = '{id:"minecraft:rabbit_hide"}' },
+  { mainhand = '{id:"minecraft:wheat"}' }, { mainhand = '{id:"minecraft:leather"}' },
+  { mainhand = '{id:"minecraft:feather"}' },
+]
+weights = [5, 15, 10, 10, 20, 20, 20]
+
+[frog.variant]
+# src: Frog#read "variant", ids from data/minecraft/frog_variant. No baby model.
+chance = 1.0
+nbt = ['variant:"minecraft:temperate"', 'variant:"minecraft:warm"', 'variant:"minecraft:cold"']
+
+[happy_ghast.baby]
+# Ghastling.
+chance = 0.15
+nbt = ['Age:-24000']
+
+[happy_ghast.harness]
+# Harness in the body slot.
+chance = 0.4
+unless = ["baby"]
+equip = [
+  { body = '{id:"minecraft:white_harness"}' }, { body = '{id:"minecraft:orange_harness"}' },
+  { body = '{id:"minecraft:magenta_harness"}' }, { body = '{id:"minecraft:light_blue_harness"}' },
+  { body = '{id:"minecraft:yellow_harness"}' }, { body = '{id:"minecraft:lime_harness"}' },
+  { body = '{id:"minecraft:pink_harness"}' }, { body = '{id:"minecraft:gray_harness"}' },
+  { body = '{id:"minecraft:light_gray_harness"}' }, { body = '{id:"minecraft:cyan_harness"}' },
+  { body = '{id:"minecraft:purple_harness"}' }, { body = '{id:"minecraft:blue_harness"}' },
+  { body = '{id:"minecraft:brown_harness"}' }, { body = '{id:"minecraft:green_harness"}' },
+  { body = '{id:"minecraft:red_harness"}' }, { body = '{id:"minecraft:black_harness"}' },
+]
+
+[horse.variant]
+# src: Horse#read "Variant" int = colour | markings << 8. Colours 0 white, 1 creamy,
+# 2 chestnut, 3 brown, 4 black, 5 gray, 6 dark_brown; markings 0 none, 1 white,
+# 2 white_field, 3 white_dots, 4 black_dots.
+chance = 1.0
+nbt = [
+  'Variant:0', 'Variant:1', 'Variant:2', 'Variant:3', 'Variant:4', 'Variant:5', 'Variant:6',
+  'Variant:256', 'Variant:257', 'Variant:258', 'Variant:259', 'Variant:260', 'Variant:261', 'Variant:262',
+  'Variant:512', 'Variant:513', 'Variant:514', 'Variant:515', 'Variant:516', 'Variant:517', 'Variant:518',
+  'Variant:768', 'Variant:769', 'Variant:770', 'Variant:771', 'Variant:772', 'Variant:773', 'Variant:774',
+  'Variant:1024', 'Variant:1025', 'Variant:1026', 'Variant:1027', 'Variant:1028', 'Variant:1029', 'Variant:1030',
+]
+
+[horse.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[horse.saddle]
+chance = 0.2
+unless = ["baby"]
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+also = 'Tame:1b'
+
+[horse.armour]
+chance = 0.15
+unless = ["baby"]
+also = 'Tame:1b'
+equip = [
+  { body = '{id:"minecraft:leather_horse_armor"}' },
+  { body = '{id:"minecraft:leather_horse_armor",components:{"minecraft:dyed_color":11546150}}' },
+  { body = '{id:"minecraft:copper_horse_armor"}' },
+  { body = '{id:"minecraft:iron_horse_armor"}' },
+  { body = '{id:"minecraft:golden_horse_armor"}' },
+  { body = '{id:"minecraft:diamond_horse_armor"}' },
+  { body = '{id:"minecraft:netherite_horse_armor"}' },
+]
+weights = [2, 1, 2, 3, 3, 2, 1]
+
+[mooshroom.variant]
+# src: MushroomCow#read "Type": "red" or "brown".
+chance = 1.0
+nbt = ['Type:"red"', 'Type:"brown"']
+weights = [4, 1]
+
+[mooshroom.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[mule.baby]
+chance = 0.05
+nbt = ['Age:-24000']
+
+[mule.chest]
+chance = 0.15
+unless = ["baby"]
+nbt = ['ChestedHorse:1b']
+also = 'Tame:1b'
+
+[mule.saddle]
+chance = 0.15
+unless = ["baby"]
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+also = 'Tame:1b'
+
+[ocelot.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[parrot.variant]
+# src: Parrot#read "Variant" int: 0 red_blue, 1 blue, 2 green, 3 yellow_blue, 4 gray.
+chance = 1.0
+nbt = ['Variant:0', 'Variant:1', 'Variant:2', 'Variant:3', 'Variant:4']
+
+[parrot.sitting]
+# src: TamableAnimal#read "Sitting"; ParrotModel uses the sitting pose.
+chance = 0.3
+nbt = ['Sitting:1b']
+also = 'Owner:[I;1,2,3,4]'
+
+[pig.variant]
+# src: Pig#read "variant", ids from data/minecraft/pig_variant.
+chance = 1.0
+nbt = ['variant:"minecraft:temperate"', 'variant:"minecraft:warm"', 'variant:"minecraft:cold"']
+weights = [2, 1, 1]
+
+[pig.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[pig.saddle]
+chance = 0.1
+unless = ["baby"]
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+
+[rabbit.variant]
+# src: Rabbit#read "RabbitType" int: 0 brown, 1 white, 2 black, 3 white_splotched,
+# 4 gold, 5 salt, 99 evil (killer bunny, never natural; kept rare).
+chance = 1.0
+nbt = ['RabbitType:0', 'RabbitType:1', 'RabbitType:2', 'RabbitType:3', 'RabbitType:4', 'RabbitType:5', 'RabbitType:99']
+weights = [4, 2, 2, 2, 2, 2, 0.1]
+
+[rabbit.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[sheep.colour]
+# src: Sheep#read "Color" byte dye id; weights from SheepColorSpawnRules (temperate):
+# white 82, black 5, gray 5, light_gray 5, brown 3, pink rare.
+chance = 1.0
+nbt = ['Color:0b', 'Color:15b', 'Color:7b', 'Color:8b', 'Color:12b', 'Color:6b']
+weights = [82, 5, 5, 5, 3, 0.3]
+
+[sheep.dyed]
+# Player-dyed colours, for coverage.
+chance = 0.05
+nbt = [
+  'Color:1b', 'Color:2b', 'Color:3b', 'Color:4b', 'Color:5b', 'Color:9b',
+  'Color:10b', 'Color:11b', 'Color:13b', 'Color:14b',
+]
+
+[sheep.sheared]
+# Bare body; src: Sheep#read "Sheared".
+chance = 0.15
+nbt = ['Sheared:1b']
+
+[sheep.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[skeleton_horse.baby]
+chance = 0.05
+nbt = ['Age:-24000']
+
+[skeleton_horse.saddle]
+chance = 0.1
+unless = ["baby"]
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+also = 'Tame:1b'
+
+[sniffer.baby]
+# Snifflet.
+chance = 0.2
+nbt = ['Age:-24000']
+
+[snow_golem.pumpkin]
+# Bare snow head; src: SnowGolem#read "Pumpkin" (default true).
+chance = 0.2
+nbt = ['Pumpkin:0b']
+
+[strider.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[strider.saddle]
+chance = 0.1
+unless = ["baby"]
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+
+[turtle.baby]
+chance = 0.2
+nbt = ['Age:-24000']
+
+[turtle.egg]
+# Swollen belly (TurtleModel eggBelly), adults only; src: Turtle#read "has_egg".
+chance = 0.15
+unless = ["baby"]
+nbt = ['has_egg:1b']
+
+[villager.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[villager.data]
+# Biome robe; src: Villager#read "VillagerData" {type, profession, level}.
+chance = 1.0
+nbt = [
+  'VillagerData:{type:"minecraft:plains",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:desert",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:jungle",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:savanna",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:snow",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:swamp",profession:"minecraft:none",level:1}',
+  'VillagerData:{type:"minecraft:taiga",profession:"minecraft:none",level:1}',
+]
+weights = [4, 2, 1, 1, 1, 1, 1]
+
+[villager.profession]
+# Profession outfit; ids from VillagerProfession. Code sets VillagerData.profession to
+# "minecraft:<id>" in the snippet picked above (babies have none).
+chance = 0.75
+unless = ["baby"]
+nbt = [
+  'armorer', 'butcher', 'cartographer', 'cleric', 'farmer', 'fisherman', 'fletcher',
+  'leatherworker', 'librarian', 'mason', 'nitwit', 'shepherd', 'toolsmith', 'weaponsmith',
+]
+merge_into = "VillagerData.profession"
+
+[villager.level]
+# Badge on the belt: 1 stone .. 5 diamond. Sets VillagerData.level.
+chance = 0.4
+requires = ["profession"]
+nbt = ['2', '3', '4', '5']
+weights = [4, 3, 2, 1]
+merge_into = "VillagerData.level"
+
+[zombie_horse.baby]
+chance = 0.05
+nbt = ['Age:-24000']
+
+[zombie_horse.saddle]
+chance = 0.1
+unless = ["baby"]
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+also = 'Tame:1b'
+
+# ---------------------------------------------------------------- water
+
+[axolotl.variant]
+# src: Axolotl#read "Variant" int: 0 lucy, 1 wild, 2 gold, 3 cyan, 4 blue (natural 1/1200).
+chance = 1.0
+nbt = ['Variant:0', 'Variant:1', 'Variant:2', 'Variant:3', 'Variant:4']
+weights = [1, 1, 1, 1, 0.05]
+
+[axolotl.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[dolphin.baby]
+# Dolphin is an AgeableWaterCreature with a baby model.
+chance = 0.1
+nbt = ['Age:-24000']
+
+[glow_squid.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[glow_squid.dark]
+# No self-glow (GlowSquidRenderer); src: GlowSquid#read "DarkTicksRemaining".
+# Only visible in dim light.
+chance = 0.1
+nbt = ['DarkTicksRemaining:100']
+
+[nautilus.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[nautilus.saddle]
+# AbstractNautilus#canUseSlot wants it tame for saddle/body.
+chance = 0.15
+unless = ["baby"]
+equip = [{ saddle = '{id:"minecraft:saddle"}' }]
+also = 'Owner:[I;1,2,3,4]'
+verify = true
+
+[nautilus.armour]
+chance = 0.1
+unless = ["baby"]
+also = 'Owner:[I;1,2,3,4]'
+equip = [
+  { body = '{id:"minecraft:copper_nautilus_armor"}' },
+  { body = '{id:"minecraft:iron_nautilus_armor"}' },
+  { body = '{id:"minecraft:golden_nautilus_armor"}' },
+  { body = '{id:"minecraft:diamond_nautilus_armor"}' },
+  { body = '{id:"minecraft:netherite_nautilus_armor"}' },
+]
+weights = [2, 3, 2, 2, 1]
+verify = true
+
+[pufferfish.puff]
+# src: Pufferfish#read "PuffState" 0-2.
+chance = 0.5
+nbt = ['PuffState:1', 'PuffState:2']
+
+[salmon.size]
+# src: Salmon#read "type": small, medium, large.
+chance = 1.0
+nbt = ['type:"small"', 'type:"medium"', 'type:"large"']
+weights = [1, 2, 1]
+
+[squid.baby]
+chance = 0.15
+nbt = ['Age:-24000']
+
+[tropical_fish.variant]
+# src: TropicalFish#read "Variant" packed int = pattern | base colour << 16 |
+# pattern colour << 24; the 22 TropicalFish.COMMON_VARIANTS.
+chance = 1.0
+nbt = [
+  'Variant:117506305', 'Variant:117899265', 'Variant:185008129', 'Variant:117441793',
+  'Variant:118161664', 'Variant:65536', 'Variant:50726144', 'Variant:67764993',
+  'Variant:234882305', 'Variant:67110144', 'Variant:117441025', 'Variant:16778497',
+  'Variant:101253888', 'Variant:50660352', 'Variant:918529', 'Variant:235340288',
+  'Variant:918273', 'Variant:67108865', 'Variant:917504', 'Variant:459008',
+  'Variant:67699456', 'Variant:67371009',
+]
+
+[zombie_nautilus.variant]
+# src: ZombieNautilus#read "variant", ids from data/minecraft/zombie_nautilus_variant.
+chance = 1.0
+nbt = ['variant:"minecraft:temperate"', 'variant:"minecraft:warm"']
+
+# ---------------------------------------------------------------- boss
+
+[wither.armour]
+# Wither armour shell at half health or below (WitherBoss#isPowered, max health 300).
+chance = 0.3
+nbt = ['Health:140f']
+
+[wither.spawning]
+# Blue, flashing spawn-in look; src: WitherBoss#read "Invul" (synced DATA_ID_INV).
+chance = 0.1
+nbt = ['Invul:150']
+verify = true
+
+# ---------------------------------------------------------------- action looks
+# Looks a mob only has mid-fight. Their synced flags are set by AI goals and never saved, so
+# summon NBT can't reach them; the mobcapture mod (installed on the server) reads these extra
+# keys on load and sets the flag (NaturalLookMixin). Vanilla ignores the keys. Shows at once,
+# no ticks needed.
+#   mobcapture_aggressive:1b  Mob#setAggressive: zombie arms up, bow drawn, weapon raised.
+#   mobcapture_charging:1b    the mob's attack flag (blaze flames, ghast face, vex, pillager).
+#   mobcapture_spell:<id>b    SpellcasterIllager casting pose; ids from IllagerSpell.
+# chance = share of sightings where the mob is fighting x share of a fight in that look,
+# from the goal timings in the source. Seen from high above, mobs are mostly going about
+# their business, so fighting is taken as ~20 % for common hostiles, more where mobs are
+# usually met in fights (fortress, mansion, raid) and 100 % for vexes, which only exist in
+# fights.
+
+[blaze.flames]
+# BlazeAttackGoal: charged 78 of every 178 ticks (44 %) in a fight; fighting ~55 % (they
+# engage from 48 blocks, and fortress halls keep them in sight of players).
+chance = 0.25
+nbt = ['mobcapture_charging:1b']
+
+[ghast.shooting]
+# GhastShootFireballGoal: face lit 10 of every 60 ticks (17 %); fighting ~40 %.
+chance = 0.07
+nbt = ['mobcapture_charging:1b']
+
+[vex.charging]
+# VexChargeAttackGoal: red charge texture for ~35 % of a fight; vexes only appear in fights.
+chance = 0.35
+nbt = ['mobcapture_charging:1b']
+
+[pillager.charging]
+# RangedCrossbowAttackGoal: charging 25 of ~55 ticks (45 %); fighting ~25 %. Arms take the
+# charging pose; the string stays slack, since that needs the item in use over ticks.
+chance = 0.12
+nbt = ['mobcapture_charging:1b']
+
+[evoker.casting]
+# Fangs 40 of 100 ticks, vexes 100 of 340: casting ~45 % of a fight; fighting ~45 %
+# (mansions and raids). Arms raised; spells differ only in particle colour, and particles
+# don't move in a frozen world, so one spell (fangs) stands for all.
+chance = 0.2
+nbt = ['mobcapture_spell:2b']
+
+[vindicator.aggressive]
+# Axe and raised arms only while aggressive, i.e. the whole time it has a target; fighting
+# ~40 % (raids, mansions).
+chance = 0.4
+nbt = ['mobcapture_aggressive:1b']
+
+[zombie.aggressive]
+# Arms raised the whole time it chases a target; chasing ~20 %.
+chance = 0.2
+nbt = ['mobcapture_aggressive:1b']
+
+[husk.aggressive]
+chance = 0.2
+nbt = ['mobcapture_aggressive:1b']
+
+[drowned.aggressive]
+# Also raises a held trident.
+chance = 0.2
+nbt = ['mobcapture_aggressive:1b']
+
+[zombie_villager.aggressive]
+chance = 0.2
+nbt = ['mobcapture_aggressive:1b']
+
+[zombified_piglin.aggressive]
+# Neutral: only after being provoked.
+chance = 0.05
+nbt = ['mobcapture_aggressive:1b']
+
+[skeleton.aggressive]
+# Bow drawn (AbstractSkeletonRenderer) the whole time it has a target; ~20 %.
+chance = 0.2
+nbt = ['mobcapture_aggressive:1b']
+
+[stray.aggressive]
+chance = 0.2
+nbt = ['mobcapture_aggressive:1b']
+
+[bogged.aggressive]
+chance = 0.2
+nbt = ['mobcapture_aggressive:1b']
+
+[parched.aggressive]
+chance = 0.2
+nbt = ['mobcapture_aggressive:1b']
+
+[wither_skeleton.aggressive]
+# Sword raised; fortress fights, ~30 %.
+chance = 0.3
+nbt = ['mobcapture_aggressive:1b']
+
+# ---------------------------------------------------------------- extras (not mobs)
+# Mannequin: a player-shaped entity (1.21.9+), here only as the default skins Steve and Alex.
+# The profile's texture and model set the skin; the description ("NPC") label is hidden.
+
+[mannequin.skin]
+chance = 1.0
+nbt = [
+  'profile:{texture:"entity/player/wide/steve",model:"wide"}',
+  'profile:{texture:"entity/player/slim/alex",model:"slim"}',
+]
+also = 'hide_description:1b'
+
+[mannequin.armour]
+chance = 0.4
+template = "armour"
+
+[mannequin.held]
+chance = 0.5
+equip = [
+  { mainhand = '{id:"minecraft:iron_sword"}' }, { mainhand = '{id:"minecraft:diamond_pickaxe"}' },
+  { mainhand = '{id:"minecraft:bow"}' }, { mainhand = '{id:"minecraft:torch"}' },
+  { mainhand = '{id:"minecraft:shield"}' }, { mainhand = '{id:"minecraft:bread"}' },
+]
+
+[armor_stand.arms]
+chance = 0.5
+nbt = ['ShowArms:1b']
+
+[armor_stand.armour]
+chance = 0.7
+template = "armour"
+
+[armor_stand.small]
+chance = 0.1
+nbt = ['Small:1b']
+
+[armor_stand.plate]
+chance = 0.3
+nbt = ['NoBasePlate:1b']
+
+# ---------------------------------------------------------------- riders
+# chance: per summon of the vehicle. vehicle_nbt / vehicle_equip are forced on the vehicle,
+# skip lists vehicle features not to roll. alternatives: lists of passengers, one list
+# picked (by weights). Each passenger {id, nbt, equip, roll_states} becomes an entry in
+# Passengers:[{id:"minecraft:<id>",...}] and also needs the base NBT (NoAI, Silent, Tags);
+# roll_states = true rolls its own features too. The first passenger sits in front.
+
+[riders.chicken_jockey]
+# Zombie#finalizeSpawn: baby zombie on a chicken, IsChickenJockey on the chicken.
+vehicle = "chicken"
+chance = 0.03
+vehicle_nbt = 'IsChickenJockey:1b'
+skip = ["baby"]
+alternatives = [
+  [{ id = "zombie", nbt = 'IsBaby:1b', roll_states = true }],
+  [{ id = "husk", nbt = 'IsBaby:1b', roll_states = true }],
+  [{ id = "drowned", nbt = 'IsBaby:1b', roll_states = true }],
+  [{ id = "zombie_villager", nbt = 'IsBaby:1b', roll_states = true }],
+  [{ id = "zombified_piglin", nbt = 'IsBaby:1b', roll_states = true }],
+]
+weights = [6, 2, 1, 1, 1]
+
+[riders.spider_jockey]
+# Spider#finalizeSpawn: skeleton on a spider, 1 %.
+vehicle = "spider"
+chance = 0.03
+alternatives = [[{ id = "skeleton", roll_states = true }]]
+
+[riders.cave_spider_jockey]
+# CaveSpider inherits Spider#finalizeSpawn.
+vehicle = "cave_spider"
+chance = 0.01
+alternatives = [[{ id = "skeleton", roll_states = true }]]
+
+[riders.skeleton_horseman]
+# SkeletonTrapGoal: tamed adult skeleton horse, skeleton with iron helmet and bow.
+vehicle = "skeleton_horse"
+chance = 0.5
+vehicle_nbt = 'Tame:1b'
+skip = ["baby"]
+alternatives = [[{ id = "skeleton", equip = { head = '{id:"minecraft:iron_helmet"}', mainhand = '{id:"minecraft:bow",components:{"minecraft:enchantments":{"minecraft:power":1}}}' } }]]
+
+[riders.zombie_horseman]
+# ZombieHorse#finalizeSpawn (natural): zombie with an iron spear.
+vehicle = "zombie_horse"
+chance = 0.6
+skip = ["baby"]
+alternatives = [[{ id = "zombie", equip = { mainhand = '{id:"minecraft:iron_spear"}' }, roll_states = true }]]
+
+[riders.camel_husk_riders]
+# Husk#finalizeSpawn: husk with iron spear in front, parched behind.
+vehicle = "camel_husk"
+chance = 0.8
+alternatives = [[
+  { id = "husk", equip = { mainhand = '{id:"minecraft:iron_spear"}' } },
+  { id = "parched", roll_states = true },
+]]
+
+[riders.strider_jockey]
+# Strider#finalizeSpawn 1/30: saddled strider, zombified piglin with warped fungus on a stick.
+vehicle = "strider"
+chance = 0.05
+skip = ["baby"]
+vehicle_equip = { saddle = '{id:"minecraft:saddle"}' }
+alternatives = [[{ id = "zombified_piglin", equip = { mainhand = '{id:"minecraft:warped_fungus_on_a_stick"}' } }]]
+
+[riders.strider_stack]
+# Strider#finalizeSpawn 1/10: baby strider riding an adult.
+vehicle = "strider"
+chance = 0.1
+skip = ["baby"]
+alternatives = [[{ id = "strider", nbt = 'Age:-24000' }]]
+
+[riders.ravager_rider]
+# Raid#spawnGroup: pillager, evoker or vindicator riding a ravager.
+vehicle = "ravager"
+chance = 0.3
+alternatives = [
+  [{ id = "pillager", roll_states = true }],
+  [{ id = "vindicator", roll_states = true }],
+  [{ id = "evoker", roll_states = true }],
+]
+weights = [3, 2, 1]
+
+[riders.zombie_nautilus_rider]
+# Drowned#finalizeSpawn: drowned with a trident rides a zombie nautilus (50 %).
+vehicle = "zombie_nautilus"
+chance = 0.5
+alternatives = [[{ id = "drowned", equip = { mainhand = '{id:"minecraft:trident"}' } }]]

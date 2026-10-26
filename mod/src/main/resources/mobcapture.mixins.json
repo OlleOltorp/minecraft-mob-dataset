@@ -1,0 +1,31 @@
+{
+	"required": true,
+	"package": "io.github.olleoltorp.mobcapture.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"BlazeInvoker",
+		"EnderManAccessor",
+		"NaturalLookMixin",
+		"SpellcasterIllagerAccessor"
+	],
+	"client": [
+		"ClientLevelAccessor",
+		"EntityRenderDistanceMixin",
+		"ExactCullingMixin",
+		"HideBossBarMixin",
+		"HideToastsMixin",
+		"LabelFlameMixin",
+		"LabelGameRendererMixin",
+		"LabelLevelRendererMixin",
+		"LabelRenderTypeMixin",
+		"LevelRendererAccessor",
+		"MotionPoseMixin",
+		"PhantomRenderDistanceMixin",
+		"ScrollingLayerOutlineMixin",
+		"SectionOcclusionGraphAccessor",
+		"ViewAreaInvoker"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

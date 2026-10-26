@@ -1,0 +1,90 @@
+# Game client settings for captures: what the "camera" renders.
+# Applied to each game window's options.txt by game/client.py when `mobdataset session` starts
+# the windows.
+
+[options]
+# Presets override the single settings below, so it must be custom.
+graphicsPreset = '"custom"'
+# Clouds drift and shadows move with the mob: both break the fg/bg difference labels.
+renderClouds = '"false"'
+entityShadows = "false"
+# New chunks fade in over time, so the ground would differ between shots.
+chunkSectionFadeInTime = "0.0"
+# Keep rendering at full rate when the window isn't focused or nobody touches it.
+pauseOnLostFocus = "false"
+inactivityFpsLimit = '"minimized"'
+skipMultiplayerWarning = "true"
+# New game folders (one per extra window) would show tutorial pop-ups in the corner of the
+# pictures, and the first-start accessibility screen before joining.
+tutorialStep = '"none"'
+onboardAccessibility = "false"
+joinedFirstServer = "true"
+# 2 = hidden: command replies in chat would land in the shots.
+chatVisibility = "2"
+fov = "0.0"
+# Spectators count as flying, which widens the view by 10% (77 instead of 70 degrees); off,
+# so the view is exactly the 70 degrees the label maths assumes.
+fovEffectScale = "0.0"
+# Small mobs (chicken) are only drawn up to ~32 blocks at 1.0; 5.0 is the maximum.
+entityDistanceScaling = "5.0"
+# Chunks drawn around the camera (14 = 224 blocks): covers mobs out to the 200-block limit.
+# At 24, 10 windows max out CPU and GPU for no gain in normal scenes.
+renderDistance = "14"
+# The capture needs ~30 pictures a second; uncapped, every window draws as fast as it can.
+maxFps = "30"
+# Lowest the game allows (about 1/16 of default): a bumped mouse barely turns the camera,
+# and the next scripted tp resets the view anyway.
+mouseSensitivity = "0.0"
+# Silent: capture windows run in the background, often several at once.
+soundCategory_master = "0.0"
+
+[mod]
+# The mobcapture mod (mod/): every mob is drawn up to this many blocks, whatever its size.
+# Without it, at renderDistance 14 and entityDistanceScaling 5.0, the smallest mobs
+# (silverfish, endermite, tadpole) vanish at ~200 blocks. 0 = the game's own rule.
+entity_render_distance = 400
+# No pop-ups in the top-right corner: tutorial, "chat messages can't be verified" (offline
+# servers, needed for several windows), advancements, recipes.
+hide_toasts = true
+# The game guesses that terrain sections more than 60 blocks away are hidden, and gets it
+# wrong for some in plain view (holes in far terrain, mobs there not drawn); true turns the
+# guess off. Costs some speed: more sections are built and drawn.
+exact_culling = true
+# Each game window takes picture + label image requests on a local port: this one for a
+# single signed-in window, this + k for window camk (protocol/label-capture.md).
+control_port_base = 25600
+
+[server]
+# server.properties values the camera depends on; applied before the server starts.
+# Terrain and mobs are only sent this many chunks out; matches renderDistance.
+view-distance = "14"
+# Mobs are sent up to 5x their usual tracking range (still capped by view-distance).
+entity-broadcast-range-percentage = "500"
+# No watchdog: generating new terrain can hold the server thread over a minute, and the
+# watchdog then shuts the server down as crashed. Our tools time out on their own.
+max-tick-time = "-1"
+
+[hud]
+# HUD sprites replaced by transparent ones, so they never show up in shots.
+hidden_sprites = [
+    "crosshair",
+    "crosshair_attack_indicator_background",
+    "crosshair_attack_indicator_full",
+    "crosshair_attack_indicator_progress",
+]
+
+[window]
+# Game window size = picture size. The mod reads pictures and labels straight from the
+# game, so any size works; the window capture (game/window_capture.py, used by
+# `mobdataset check setup` and `mobdataset showcase`) expects 1280x720.
+width = 1280
+height = 720
+
+[per_window]
+# Options that differ between game windows, so the dataset covers how players set them.
+# Window k gets entry k mod length (the single signed-in window is 0). gamma is the
+# Brightness slider: 0.0 Moody, 0.5 the default, 1.0 Bright.
+# Slots 1-4 (4 windows): Moody, default, Bright, default: a quarter Moody, half default (what
+# most players keep), a quarter Bright. Slots 5-10 add Moody, default, Bright, default,
+# Bright, default: 10 windows give 2 Moody, 5 default, 3 Bright (dark pictures are plenty).
+gamma = ["0.5", "0.0", "0.5", "1.0", "0.5", "0.0", "0.5", "1.0", "0.5", "1.0", "0.5"]

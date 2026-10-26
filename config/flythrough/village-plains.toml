@@ -1,0 +1,6 @@
+# A plains village in the morning: villagers, their golem, cats and farm animals.
+x = 8784
+z = -7392
+time = 1500
+listed = [["villager", 10], ["iron_golem", 1], ["cat", 2], ["cow", 2], ["sheep", 2], ["pig", 2],
+          ["chicken", 2], ["horse", 1]]

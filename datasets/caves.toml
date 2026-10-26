@@ -1,0 +1,33 @@
+# Underground only: lush caves, dripstone caves, the deep dark and ordinary caves, about
+# 2,000 pictures. Dark pictures with few landmarks, the hardest part of the full dataset.
+
+extends = "full"
+world = "caves"
+world_seed = "20261015"
+
+[survey]
+half_size = 3072
+half_size_nether = 256
+half_size_end = 256
+
+[areas.land]
+pictures = 0
+
+[areas.ocean]
+pictures = 0
+
+[areas.caves]
+pictures = 2000
+min_per_biome = 0
+
+[areas.nether]
+pictures = 0
+
+[areas.end]
+pictures = 0
+
+[areas.structures]
+pictures = 0
+
+[areas.empty]
+pictures = 200

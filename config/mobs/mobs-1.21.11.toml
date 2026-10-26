@@ -1,0 +1,38 @@
+# Mob entity ids for Minecraft Java 1.21.11 (namespace minecraft:).
+# Groups are disjoint. Ids the game doesn't know are skipped at runtime.
+
+hostile = [
+  "blaze", "bogged", "breeze", "camel_husk", "cave_spider", "creaking", "creeper",
+  "drowned", "endermite", "evoker", "ghast", "hoglin", "husk", "magma_cube",
+  "parched", "phantom", "piglin_brute", "pillager", "ravager", "shulker",
+  "silverfish", "skeleton", "slime", "stray", "vex", "vindicator", "warden",
+  "witch", "wither_skeleton", "zoglin", "zombie", "zombie_villager",
+]
+
+neutral = [
+  "bee", "enderman", "goat", "iron_golem", "llama", "panda", "piglin",
+  "polar_bear", "spider", "trader_llama", "wolf", "zombified_piglin",
+]
+
+passive = [
+  "allay", "armadillo", "bat", "camel", "cat", "chicken", "copper_golem", "cow",
+  "donkey", "fox", "frog", "happy_ghast", "horse", "mooshroom", "mule", "ocelot",
+  "parrot", "pig", "rabbit", "sheep", "skeleton_horse", "sniffer", "snow_golem",
+  "strider", "turtle", "villager", "wandering_trader", "zombie_horse",
+]
+
+# Need water to look natural.
+water = [
+  "axolotl", "cod", "dolphin", "elder_guardian", "glow_squid", "guardian",
+  "nautilus", "pufferfish", "salmon", "squid", "tadpole", "tropical_fish",
+  "zombie_nautilus",
+]
+
+boss = ["ender_dragon", "wither"]
+
+# Need extra space around them.
+large = [
+  "camel", "camel_husk", "elder_guardian", "ender_dragon", "ghast", "happy_ghast",
+  "hoglin", "iron_golem", "polar_bear", "ravager", "sniffer", "warden", "wither",
+  "zoglin",
+]

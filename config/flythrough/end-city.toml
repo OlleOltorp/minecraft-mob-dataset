@@ -1,0 +1,5 @@
+# An End city on the outer islands: endermen, shulkers and endermites.
+dimension = "the_end"
+x = -3424
+z = -3424
+listed = [["enderman", 6], ["shulker", 3], ["endermite", 1]]

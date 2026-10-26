@@ -1,0 +1,214 @@
+# The full dataset: every biome, caves, the Nether and the End, at all times of day and in
+# all weathers, on normal terrain (world "dataset-v2" in config/worlds.toml). This file
+# reproduces the published dataset. Read by `mobdataset survey`, `structures`, `features`,
+# `plan`, `pregen`, `capture` and `export`.
+
+world = "dataset-v2"
+# A seed gives a dataset its own world (normal terrain, saved under the world's name); empty:
+# the world's settings come from config/worlds.toml.
+world_seed = ""
+seed = 2  # every random choice of the capture (spot order, cameras, mobs) follows from it
+
+[survey]
+# Biome map: one sample per `step` blocks over a square of `half_size` blocks around 0,0.
+# Read with "locate biome #<tag>" from each point, which answers with the biome right there.
+step = 64
+half_size = 10240
+half_size_nether = 4096
+half_size_end = 4096
+
+[split]
+# Whole tiles of this size go to one split, so no place is in two. Every biome and
+# structure type gets about these shares of its spots in valid and test (at least
+# min_spots); test takes its furthest tiles (test far from training spots), valid random
+# ones. Whole tiles overshoot a little: 0.08 lands at 80 / 10 / 10 overall. Tiles are per
+# dimension, so a structure and the land round it share a split. The End's main island is
+# one place (its cameras roam over all of it) and goes to train whole.
+tile = 512
+valid_share = 0.08
+test_share = 0.08
+min_spots = 1
+min_train = 0.6  # a tile isn't held out if a biome in it would keep less in train
+
+[spots]
+# Spots at least this far apart (blocks); at most this many pictures per spot.
+spacing = 300
+spacing_rare = 150  # biomes with fewer candidate points than wanted spots
+pictures_per_spot = 10
+
+# Pictures per area. Spots per biome follow from these and pictures_per_spot.
+[areas.land]
+pictures = 22000
+min_per_biome = 200
+biomes = [
+  "plains", "sunflower_plains", "snowy_plains", "ice_spikes", "desert", "swamp",
+  "mangrove_swamp", "forest", "flower_forest", "birch_forest", "dark_forest", "pale_garden",
+  "old_growth_birch_forest", "old_growth_pine_taiga", "old_growth_spruce_taiga", "taiga",
+  "snowy_taiga", "savanna", "savanna_plateau", "windswept_hills", "windswept_gravelly_hills",
+  "windswept_forest", "windswept_savanna", "jungle", "sparse_jungle", "bamboo_jungle",
+  "badlands", "eroded_badlands", "wooded_badlands", "meadow", "cherry_grove", "grove",
+  "snowy_slopes", "frozen_peaks", "jagged_peaks", "stony_peaks", "river", "frozen_river",
+  "beach", "snowy_beach", "stony_shore", "mushroom_fields",
+]
+
+[areas.ocean]
+pictures = 4000
+min_per_biome = 300
+biomes = [
+  "ocean", "deep_ocean", "warm_ocean", "lukewarm_ocean", "deep_lukewarm_ocean", "cold_ocean",
+  "deep_cold_ocean", "frozen_ocean", "deep_frozen_ocean",
+]
+
+[areas.caves]
+pictures = 7000
+min_per_biome = 1000
+# "caves" = any other biome below ground (ordinary caves).
+biomes = ["lush_caves", "dripstone_caves", "deep_dark", "caves"]
+
+[areas.nether]
+pictures = 5000
+min_per_biome = 600
+biomes = ["nether_wastes", "soul_sand_valley", "crimson_forest", "warped_forest", "basalt_deltas"]
+
+[areas.end]
+pictures = 2500
+min_per_biome = 300
+biomes = ["the_end", "end_highlands", "end_midlands", "small_end_islands", "end_barrens"]
+
+[areas.structures]
+# Spots in and around generated structures, found with `locate structure`
+# (`mobdataset structures`). Optional per type: view (surface camera distance, for big ones),
+# min_view (room cameras in narrow corridors), scan ([half, step] of the inside check, finer
+# for small ones). Per structure: dimension (default overworld), spots, camera ("surface":
+# around it facing it; "water": the same, mostly under water; "room": an open place inside
+# it, found by the game's inside-structure check) and the mobs that belong there
+# ([mob, weight]; the native_share of mobs come from this list, the rest as anywhere). Lists marked "data" are the structure's spawn_overrides in the game's
+# data; the others come from its spawners, cages and pieces in the source.
+pictures = 5830  # = the spots below x pictures_per_spot
+max_spots_per_structure = 5  # rare types (4 mansions) reuse a structure, new camera places
+max_radius = { overworld = 10000, the_nether = 4400, the_end = 4400 }  # inside the pregen area
+[areas.structures.types]
+trial_chambers = { spots = 50, camera = "room", mobs = [["breeze", 3], ["zombie", 2], ["husk", 1], ["skeleton", 2], ["stray", 1], ["bogged", 2], ["spider", 1], ["cave_spider", 1], ["slime", 1], ["silverfish", 1]] }
+ancient_city = { spots = 30, camera = "room", mobs = [["warden", 1]] }
+stronghold = { spots = 25, camera = "room", min_view = 4.0, mobs = [["silverfish", 4], ["zombie", 1], ["skeleton", 1], ["spider", 1], ["creeper", 1], ["enderman", 1]] }
+mineshaft = { spots = 25, camera = "room", min_view = 3.0, mobs = [["cave_spider", 4], ["zombie", 1], ["skeleton", 1], ["spider", 1], ["creeper", 1]] }
+monument = { spots = 25, camera = "water", mobs = [["guardian", 6], ["elder_guardian", 1]] }  # data, plus its 3 elders
+mansion = { spots = 20, camera = "surface", view = [40.0, 120.0], mobs = [["vindicator", 4], ["evoker", 2], ["vex", 2], ["allay", 1]] }
+pillager_outpost = { spots = 25, camera = "surface", mobs = [["pillager", 8], ["allay", 1], ["iron_golem", 1]] }  # data, plus cages
+village_plains = { spots = 15, camera = "surface", mobs = [["villager", 6], ["iron_golem", 1], ["cat", 2], ["horse", 1], ["cow", 1], ["pig", 1], ["sheep", 1], ["zombie_villager", 1]] }
+village_desert = { spots = 10, camera = "surface", mobs = [["villager", 6], ["iron_golem", 1], ["cat", 2], ["camel", 1], ["zombie_villager", 1]] }
+village_savanna = { spots = 10, camera = "surface", mobs = [["villager", 6], ["iron_golem", 1], ["cat", 2], ["horse", 1], ["sheep", 1], ["zombie_villager", 1]] }
+village_snowy = { spots = 10, camera = "surface", mobs = [["villager", 6], ["iron_golem", 1], ["cat", 2], ["zombie_villager", 1]] }
+village_taiga = { spots = 10, camera = "surface", mobs = [["villager", 6], ["iron_golem", 1], ["cat", 2], ["pig", 1], ["sheep", 1], ["zombie_villager", 1]] }
+swamp_hut = { spots = 15, camera = "surface", mobs = [["witch", 3], ["cat", 1]] }  # data (black cat)
+desert_pyramid = { spots = 15, camera = "surface", mobs = [["husk", 3], ["zombie", 1], ["skeleton", 1], ["rabbit", 1], ["camel", 1]] }
+jungle_pyramid = { spots = 10, camera = "surface", mobs = [["zombie", 1], ["skeleton", 1], ["parrot", 1], ["ocelot", 1], ["panda", 1]] }
+igloo = { spots = 10, camera = "surface", mobs = [["villager", 1], ["zombie_villager", 1], ["stray", 1], ["polar_bear", 1]] }
+shipwreck = { spots = 15, camera = "water", mobs = [["drowned", 3], ["cod", 1], ["salmon", 1], ["squid", 1]] }
+ocean_ruin_warm = { spots = 10, camera = "water", mobs = [["drowned", 3], ["tropical_fish", 1], ["pufferfish", 1]] }
+ocean_ruin_cold = { spots = 10, camera = "water", mobs = [["drowned", 3], ["cod", 1], ["salmon", 1]] }
+fortress = { dimension = "the_nether", spots = 40, camera = "room", mobs = [["blaze", 10], ["zombified_piglin", 5], ["wither_skeleton", 8], ["skeleton", 2], ["magma_cube", 3]] }  # data
+bastion_remnant = { dimension = "the_nether", spots = 35, camera = "room", mobs = [["piglin", 6], ["piglin_brute", 3], ["hoglin", 2], ["magma_cube", 1]] }
+# Sprinkled in, mostly as look-alikes the model must not take for mobs (bones, portals).
+# No mobs list: native mobs come from the biome, as anywhere.
+trail_ruins = { spots = 8, camera = "surface", view = [6.0, 25.0] }
+mineshaft_mesa = { spots = 8, camera = "room", min_view = 3.0 }
+shipwreck_beached = { spots = 8, camera = "surface", view = [6.0, 25.0] }
+ruined_portal = { spots = 5, camera = "surface", view = [6.0, 25.0] }
+ruined_portal_desert = { spots = 5, camera = "surface", view = [6.0, 25.0] }
+ruined_portal_jungle = { spots = 5, camera = "surface", view = [6.0, 25.0] }
+ruined_portal_mountain = { spots = 5, camera = "surface", view = [6.0, 25.0] }
+ruined_portal_swamp = { spots = 5, camera = "surface", view = [6.0, 25.0] }
+ruined_portal_ocean = { spots = 5, camera = "water" }
+ruined_portal_nether = { dimension = "the_nether", spots = 5, camera = "near" }
+nether_fossil = { dimension = "the_nether", spots = 8, camera = "near" }
+# Not structures, so `locate` can't find them: `mobdataset features` reads the region files
+# for a block entity or a block (`find`) and keeps one point per feature. Cameras: "spawner"
+# stands in the room facing the spawner (mobs: the spawner's own); "near" uses the open place
+# closest to the feature, facing it; "surface" as for structures.
+dungeon = { find = { block_entity = "minecraft:mob_spawner", spawner_mobs = ["zombie", "skeleton", "spider"] }, spots = 30, camera = "spawner", mobs = [["zombie", 2], ["skeleton", 1], ["spider", 1]] }
+geode = { find = { block = "minecraft:budding_amethyst" }, spots = 10, camera = "near" }
+# Bone blocks are also in trial chambers and ancient cities (all deep, so min_y; the
+# structure list is a sample, so away_from alone misses some).
+fossil = { find = { block = "minecraft:bone_block", away_from = ["trial_chambers", "ancient_city"], away = 64, min_y = 0 }, spots = 8, camera = "near" }
+# Suspicious sand is also in desert pyramids and warm ocean ruins; points near the known ones
+# are dropped, and wells stand on land (min_y: at or above sea level), ruins under water.
+desert_well = { find = { block = "minecraft:suspicious_sand", away_from = ["desert_pyramid", "ocean_ruin_warm"], away = 64, min_y = 62 }, spots = 8, camera = "surface", view = [6.0, 25.0] }
+end_gateway = { dimension = "the_end", find = { block_entity = "minecraft:end_gateway" }, spots = 10, camera = "surface", view = [6.0, 30.0], mobs = [["enderman", 1]] }
+end_city = { dimension = "the_end", spots = 35, camera = "surface", mobs = [["shulker", 3], ["enderman", 2]] }
+
+[areas.empty]
+# Pictures with no mobs at all, anywhere above.
+pictures = 4000
+
+[time]
+# Share of pictures per time of day; ticks are picked uniformly inside each window.
+day = { share = 0.5, ticks = [1000, 11000] }
+dusk_dawn = { share = 0.15, ticks = [[12000, 13500], [22500, 24000]] }
+night = { share = 0.35, ticks = [14000, 22000] }
+
+[weather]
+# Weather where the biome has it (no rain in deserts, snow in cold biomes).
+clear = 0.8
+rain = 0.15
+thunder = 0.05
+
+[aerial]
+# Extra pictures from high above, on top of the rest: per band, share x pictures_per_spot
+# more per outdoor spot on average, camera height and downward pitch (degrees) in these
+# ranges. Mobs placed must still be min_pixels tall, so the highest show only big ones.
+# max_distance replaces the scene's for that band: from 200 blocks up at 45 degrees the
+# ground in the middle of the view is about 280 blocks away.
+areas = ["land", "ocean", "end", "structures"]
+bands = [
+  { share = 0.15, height = [60.0, 150.0], pitch = [40.0, 85.0], max_distance = 250.0 },
+  { share = 0.05, height = [150.0, 200.0], pitch = [45.0, 85.0], max_distance = 300.0 },
+]
+
+[scene]
+# Mobs that may be placed: mob ids and groups from config/mobs/mobs-<version>.toml; "all" is
+# every mob. Structures and biomes only bring their own mobs if they are in this list.
+mobs = ["all"]
+mobs_min = 1
+mobs_max = 20
+native_share = 0.7  # mobs that spawn in that place naturally; the rest any mob that fits
+max_distance = 200.0
+# Distance each mob aims for: log-uniform over near_range, but far_share of mobs over
+# [near_range max, max_distance], so most mobs are big enough to learn from.
+near_range = [3.0, 120.0]
+far_share = 0.15
+min_pixels = 6.0  # a mob must be at least this tall in the picture to be placed
+camera_height = [1.62, 60.0]
+mobs_mean_extra = 4.0  # mobs per picture = mobs_min + exponential with this mean, capped
+underwater_share = 0.4  # ocean pictures taken under water
+# Structures: surface cameras sit this far from the structure (log-uniform), facing and
+# tilted at it; "water" ones go under water this often, closer (water hides ~20 blocks on).
+structure_view = [8.0, 60.0]
+# Moving poses for frozen mobs (MotionPoseMixin): per summon, still, walking or running, with
+# a random point in the stride and in idle animations (wings, tails, tentacles). Walk speed
+# is the game's limb-swing speed (0..1).
+motion = { still = 0.45, walk = 0.4, run = 0.15, walk_speed = [0.25, 0.65], run_speed = [0.7, 1.0] }
+# Sprinkled non-mobs, as a share of mob picks: mannequins (Steve or Alex, labelled, exported
+# as "player") and armour stands (unlabelled: a human shape the model must not take for a mob).
+extras = { mannequin = 0.01, armor_stand = 0.02 }
+# Natural groups: a native mob sometimes brings a few of its kind close by (herds, packs).
+crowd = { share = 0.1, size = [2, 4], radius = 5.0 }
+structure_view_water = [4.0, 20.0]
+structure_underwater_share = 0.9
+# Kind of spot each mob goes to (only kinds the probe found count).
+kind_shares = { ground = 0.72, water = 0.1, water_floor = 0.04, air = 0.1, lava = 0.04 }
+boss_weight = 0.15  # relative to 1 for other mobs, when "any mob" is drawn
+
+[export]
+# Classes of the published dataset (`mobdataset export`): the mob ids of these groups in
+# config/mobs/, then the labelled extras. rename maps a game id to its class name; labelled
+# types not in these lists stop the export (--allow-unknown skips them).
+groups = ["hostile", "neutral", "passive", "water", "boss"]
+extra = ["mannequin"]
+rename = { mannequin = "player" }
+# Ignore regions (iscrowd 1) only for mobs with essentially nothing visible: fewer than
+# min_pixels label pixels; or visibility (share of the mob's pixels that differ from the clean
+# plate by more than visibility_diff in some channel) below min_visibility; or, with no clean
+# plate to compare, contrast and brightness both below these. Dim, foggy, far or murky mobs
+# stay labels: they are part of the game.
+ignore = { min_pixels = 4, min_visibility = 0.02, contrast = 2.0, brightness = 10.0 }

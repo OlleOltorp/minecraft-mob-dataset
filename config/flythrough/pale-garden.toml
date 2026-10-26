@@ -1,0 +1,6 @@
+# A clearing in a pale garden at midday, grey under its canopy: creakings and the night's mobs.
+x = 10048
+z = -7232
+find_open = 80
+listed = [["creaking", 3], ["zombie", 2], ["skeleton", 2], ["spider", 1], ["creeper", 1],
+          ["enderman", 1], ["witch", 1]]
